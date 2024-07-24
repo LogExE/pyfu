@@ -11,12 +11,12 @@ filename = args.filename
 verbose = args.verbose
 
 with open(filename, 'r') as f:
-    prog = f.read()
+    prog = f.read().strip()
 
 if verbose:
-    print("Read:")
+    print("the program:")
     print(prog)
-    print("Executing...")
+    print("starting parsing...")
 
 cells = [0] * 256
 cur_cell = 0
@@ -29,25 +29,28 @@ for i in range(len(prog)):
         balance_stack.append(i)        
     elif prog[i] == "]":
         if len(balance_stack) == 0:
-            print("wrongly placed ending bracket.")
+            print(f"at char {i}: a wrongly placed ending bracket!")
             exit(0)
         last_bracket = balance_stack.pop()
         matching_bracket[last_bracket] = i
         matching_bracket[i] = last_bracket
 if len(balance_stack) != 0:
-    print("brackets are improperly placed.")
+    print("at EOF: the brackets are improperly balanced!")
     exit(0)
 
 if verbose:
-    print("Bracket mapping:")
+    print("bracket mapping:")
     print(matching_bracket)
+    print("executing the program...")
+
+print_mode = "chr"
 
 step = 0
 i = 0
 while i < len(prog):
     ch = prog[i]
     if verbose:
-        print(f"STEP {step}, at character '{prog[i]}', cell {cur_cell}, value {cells[cur_cell]}")
+        print(f"STEP {step}, at character {repr(prog[i])}, cell {cur_cell}, value {cells[cur_cell]}")
     match ch:
         case ">":
             cur_cell += 1
@@ -62,10 +65,24 @@ while i < len(prog):
             cells[cur_cell] -= 1
             i += 1
         case ".":
-            print(chr(cells[cur_cell]), end="")
+            val = cells[cur_cell]
+            if print_mode == "chr":
+                val = chr(val) 
+            print(val, end="")
             i += 1
         case ",":
+            if verbose:
+                print("enter a byte")
+                print("> ", end="")
             cells[cur_cell] = ord(input())
+            i += 1
+        case "!":
+            # a custom symbol just for my implementation
+            # it switches output mode from char to int
+            if print_mode == "chr":
+                print_mode = "int"
+            else:
+                print_mode = "chr"
             i += 1
         case "[":
             if cells[cur_cell] == 0:
@@ -78,5 +95,7 @@ while i < len(prog):
             else:
                 i += 1
         case _:
+            if verbose:
+                print("unknown character, skipping")
             i += 1
     step += 1
